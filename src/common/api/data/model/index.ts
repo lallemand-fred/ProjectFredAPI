@@ -1,1 +1,1 @@
-export * from './'
+export * from './api-response.model';
