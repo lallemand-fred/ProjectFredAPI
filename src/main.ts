@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './feature/main';
 import { HttpExceptionFilter } from './common/config/exception/http-exception.filter';
+import { swaggerConfiguration } from '@common';
 
 
 
