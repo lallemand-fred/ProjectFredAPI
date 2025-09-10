@@ -7,6 +7,7 @@ import { HttpExceptionFilter } from './common/config/exception/http-exception.fi
 const bootstrap = async (): Promise<void> => {
   const app = await NestFactory.create(AppModule);
   app.useGlobalFilters(new HttpExceptionFilter());
+  swaggerConfiguration.config(app);
   await app.listen(process.env.PORT ?? 3000);
   //process.env.PORT ?? 3000 = Si la valeur process.env.PORT n’existe pas, ?? = alors prends celle-ci : 3000.
 }
