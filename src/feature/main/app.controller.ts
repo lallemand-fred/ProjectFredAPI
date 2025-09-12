@@ -1,4 +1,12 @@
-import { Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+} from '@nestjs/common';
 import { AppService } from './app.service';
 import { create } from 'node:domain';
 
@@ -20,8 +28,14 @@ export class AppController {
 
   }
 
+  @Patch()
+  patchOnValue(name:string):void{
+
+  }
+
+
   @Put()
-  update(): void{
+  update(name:string,firstname:string): void{
 
   }
 
