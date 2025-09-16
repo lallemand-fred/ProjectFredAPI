@@ -17,6 +17,9 @@
     "paths": {
       "@common":[
         "./common"
+      ],
+      "@security":[
+        "./feature/security"
       ]
     },
     "incremental": true,
