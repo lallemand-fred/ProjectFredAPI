@@ -1,8 +1,22 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Credentials } from './data';
+import {
+  CredentialDeleteException,
+  Credentials,
+  RefreshPayload,
+  SignInPayload,
+  SignupException,
+  SignUpPayload,
+  Token,
+  UserAlreadyExistException,
+  UserNotFoundException,
+} from './data';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TokenService } from './jwt/token.service';
+import { isNil } from 'lodash';
+import { comparePassword, encryptPassword } from './util/password.decoder';
+import { Builder } from 'builder-pattern';
+import { ulid } from 'ulid';
 
 @Injectable()
 export class SecurityService {
@@ -12,4 +26,69 @@ export class SecurityService {
     private readonly repository: Repository<Credentials>,
     private readonly tokenService: TokenService,
   ) {}
+
+  async detail(id: string): Promise<Credentials> {
+    const result = await this.repository.findOneBy({ credential_id: id });
+    if (!isNil(result)) {
+      return result;
+    }
+    throw new UserNotFoundException();
+  }
+
+
+  async getByUsername(username: string, throwIfNotFound: boolean): Promise<Credentials> {
+    const result = await this.repository.findOneBy({ username });
+    if (throwIfNotFound) {
+      if (!isNil(result)) {
+        return result;
+      }
+      throw new UserNotFoundException();
+    } else {
+      if (!isNil(result)) {
+        throw new UserAlreadyExistException();
+      }
+      // Ajoute ce throw pour couvrir tous les cas
+      throw new UserNotFoundException();
+    }
+  }
+
+  //étape01: je récupère mon objet Credentials en DB
+  async signIn(payload: SignInPayload): Promise<Token | null> {
+    const result = await this.getByUsername(payload.username, true);
+    //étape02: si j ai bien mon credentials, je compare les passwords si tout est correct
+    if (await comparePassword(payload.password, result.password)) {
+      //étape03: je retourne le token
+      return this.tokenService.getTokens(result);
+    }
+    throw new UserNotFoundException();
+  }
+
+  async signup(payload: SignUpPayload): Promise<Credentials | null> {
+    await this.getByUsername(payload.username, false);
+    try {
+      const encryptedPassword = await encryptPassword(payload.password);
+      const newCredential: Credentials = Builder<Credentials>()
+        .credential_id(ulid())
+        .username(payload.username)
+        .password(encryptedPassword)
+        .mail(payload.mail)
+        .build();
+      return await this.repository.save(newCredential);
+    } catch (e) {
+      throw new SignupException();
+    }
+  }
+  async refresh(payload: RefreshPayload): Promise<Token | null> {
+    return this.tokenService.refresh(payload);
+  }
+
+  async delete(id:string): Promise<void> {
+    try {
+      const detail = await this.detail(id);
+      await this.tokenService.deleteFor(detail);
+      await this.repository.remove(detail);
+    } catch (e) {
+      throw new CredentialDeleteException();
+    }
+  }
 }

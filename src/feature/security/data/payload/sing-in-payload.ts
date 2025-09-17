@@ -5,4 +5,5 @@ export class SignInPayload{
   username: string;
   @ApiProperty()
   password: string;
+
 }
