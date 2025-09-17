@@ -4,6 +4,7 @@ import { Credentials, Token } from './data/entity';
 import { TokenService } from './jwt/token.service';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigKey, configManager } from '@common';
+import { SecurityService } from './security.service';
 
 
 @Module({
@@ -12,6 +13,6 @@ import { ConfigKey, configManager } from '@common';
     secret: configManager.getValue(ConfigKey.JWT_TOKEN_SECRET),
     signOptions: {expiresIn: configManager.getValue(ConfigKey.JWT_TOKEN_EXPIRE_IN)},
   }),TypeOrmModule.forFeature([Credentials,Token])],
-  providers: [TokenService],
+  providers: [TokenService, SecurityService],
 })
 export class SecurityModule {}
