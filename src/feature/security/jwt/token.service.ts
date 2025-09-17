@@ -13,6 +13,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigKey, configManager } from '@common';
 import { Builder } from 'builder-pattern';
 import { isNil } from 'lodash';
+import { ulid } from 'ulid';
 
 @Injectable()
 export class TokenService {
@@ -26,7 +27,7 @@ export class TokenService {
 
   async getTokens(credential: Credentials): Promise<Token | null> {
     try {
-      await this.repository.delete({ credential });
+      await this.deleteFor(credential);
       const payload = { sub: credential.credential_id };
       const token = await this.jwtService.signAsync(payload, {
         secret: configManager.getValue(ConfigKey.JWT_TOKEN_SECRET),
@@ -40,6 +41,7 @@ export class TokenService {
       });
       await this.repository.upsert(
         Builder<Token>()
+          .token_id(ulid())
           .token(token)
           .refreshToken(refreshToken)
           .credential(credential)
